@@ -1,0 +1,91 @@
+---
+title: "EMODnet Biology robis demo"
+output:
+  html_notebook: default
+  html_document: default
+---
+
+## Install the robis package
+
+robis is not available on CRAN. It needs to be installed from GitHub. In the devtools package, you will find the function install_github() which does the installation for you. If devtools is not yet installed on your machine, do that first.
+
+```{r installation, echo=TRUE, message=FALSE, warning=FALSE}
+is_installed <- function(mypkg) is.element(mypkg, installed.packages()[,1])
+if(!is_installed("devtools"))  install.packages("devtools")
+if(!is_installed("robis"))  devtools::install_github("iobis/robis")
+if(!is_installed("leaflet"))  install.packages("leaflet")
+if(!is_installed("tidyverse"))  install.packages("tidyverse")
+if(!is_installed("rworldxtra"))  install.packages("rworldxtra")
+library(robis)
+library(leaflet)
+library(tidyverse)
+library(rworldxtra)
+```
+
+## Download occurence data from OBIS
+
+### By scientific name
+
+```{r plotLeafletmap}
+data <- occurrence(scientificname = c("Abra alba"), geometry = "POLYGON ((2.3 51, 2.3 56, 8 56, 8 51,2.3 51))")
+leafletmap(data)
+```
+
+
+
+
+
+
+
+Use the leaflet package
+
+```{r plotLeaflet}
+
+ 
+
+  leaflet(data) %>% addTiles() %>% addCircleMarkers(lat = ~decimalLatitude, lng = ~decimalLongitude,
+                                                    radius = ~individualCount/100,   clusterOptions = markerClusterOptions()) 
+
+
+
+```
+
+
+
+
+Or plot using ggplot
+
+
+```{r plotGGplot}
+
+data("countriesHigh")
+world <- fortify(countriesHigh)
+ggplot(data = data, aes(decimalLongitude, decimalLatitude)) +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group), fill = "darkgrey") +
+  geom_point(aes(size = individualCount, color = scientificName)) +
+  coord_quickmap(xlim = range(data$decimalLongitude), ylim = range(data$decimalLatitude))
+```
+
+
+
+```{r plot time series}
+
+data %>% 
+  ggplot (aes(x = yearcollected, y = individualCount)) + 
+  geom_boxplot(aes(group = yearcollected)) + 
+  scale_y_log10()
+
+```
+
+
+
+```{r}
+data %>% group_by(yearcollected) %>% 
+  summarize(average = mean(individualCount, na.rm = T)) %>%
+  ggplot (aes(x = yearcollected, y = average)) + 
+  geom_point(aes()) + 
+  scale_y_log10()
+```
+
+
+
